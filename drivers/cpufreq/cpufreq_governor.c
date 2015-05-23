@@ -231,7 +231,9 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 		if (cdata->governor == GOV_ONDEMAND) {
 			rc = cdata->init_od(dbs_data, policy);
-		} else {
+		} else if (cdata->governor == GOV_ELEMENTALX) {
+                        rc = cdata->init_ex(dbs_data, policy);
+                } else {
 			rc = cdata->init(dbs_data);
 		}
 
