@@ -759,13 +759,7 @@ static void synaptics_ts_report(struct synaptics_ts_data *ts )
         //goto END;
     }
     if( inte & 0x10) {
-#ifdef VENDOR_EDIT //WayneChang, 2015/12/29, add flag to enable virtual key
-	if(!virtual_key_enable){
-		int_key(ts);
-	}
-#else
         int_key(ts);
-#endif
     }
 END:
 	return;
