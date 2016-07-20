@@ -285,6 +285,7 @@ struct qpnp_hap {
 	struct qpnp_pwm_info pwm_info;
 	struct mutex lock;
 	struct mutex wf_lock;
+	struct mutex set_lock;
 	struct completion completion;
 	enum qpnp_hap_mode play_mode;
 	enum qpnp_hap_auto_res_mode auto_res_mode;
@@ -323,13 +324,6 @@ struct qpnp_hap {
 };
 
 static struct qpnp_hap *ghap;
-/*shankai  2015-07-7 add begin for optimizing the response speed of the
-vibrator*/
-#ifdef VENDOR_EDIT
-static struct workqueue_struct *vibqueue;
-#endif //VENDOR_EDIT
-/*shankai  2015-07-7 add end for optimizing the response speed of the
-vibrator*/
 
 /* helper to read a pmic register */
 static int qpnp_hap_read_reg(struct qpnp_hap *hap, u8 *data, u16 addr)
@@ -1447,6 +1441,8 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 	u8 val = 0;
 	unsigned long timeout_ns = POLL_TIME_AUTO_RES_ERR_NS;
 
+	mutex_lock(&hap->set_lock);
+
 	if (hap->play_mode == QPNP_HAP_PWM) {
 		if (on)
 			rc = pwm_enable(hap->pwm_info.pwm_dev);
@@ -1456,8 +1452,10 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 			hap->play_mode == QPNP_HAP_DIRECT) {
 		if (on) {
 			rc = qpnp_hap_mod_enable(hap, on);
-			if (rc < 0)
+			if (rc < 0) {
+				mutex_unlock(&hap->set_lock);
 				return rc;
+			}
 
 			if (hap->correct_lra_drive_freq)
 				qpnp_hap_auto_res_enable(hap, 0);
@@ -1469,9 +1467,10 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 					(AUTO_RES_ENABLE_TIMEOUT + 1));
 
 				rc = qpnp_hap_auto_res_enable(hap, 1);
-				if (rc < 0)
+				if (rc < 0) {
+					mutex_unlock(&hap->set_lock);
 					return rc;
-
+				}
 				/*
 				 * Start timer to poll Auto Resonance error bit
 				 */
@@ -1483,8 +1482,10 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 			}
 		} else {
 			rc = qpnp_hap_play(hap, on);
-			if (rc < 0)
+			if (rc < 0) {
+				mutex_unlock(&hap->set_lock);
 				return rc;
+			}
 
 			if (hap->correct_lra_drive_freq) {
 				rc = qpnp_hap_read_reg(hap, &val,
@@ -1501,6 +1502,7 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 		}
 	}
 
+	mutex_unlock(&hap->set_lock);
 	return rc;
 }
 
@@ -1509,6 +1511,7 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int value)
 {
 	struct qpnp_hap *hap = container_of(dev, struct qpnp_hap,
 					 timed_dev);
+	flush_work(&hap->work);
 
 	mutex_lock(&hap->lock);
 	hrtimer_cancel(&hap->hap_timer);
@@ -1529,15 +1532,11 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int value)
 			      ktime_set(value / 1000, (value % 1000) * 1000000),
 			      HRTIMER_MODE_REL);
 	}
-	#ifndef VENDOR_EDIT
 	mutex_unlock(&hap->lock);
-	schedule_work(&hap->work);
-	#else //#ifdef VENDOR_EDIT
-	queue_work(vibqueue,&hap->work);
-	msleep(1);
-	mutex_unlock(&hap->lock);
-	#endif //VENDOR_EDIT
-	/* shankai 2015-07-7 modify end for optimizing the response speed of the vibrator*/
+	if (hap->play_mode == QPNP_HAP_DIRECT)
+		qpnp_hap_set(hap, hap->state);
+	else
+		schedule_work(&hap->work);
 }
 
 /* play pwm bytes */
@@ -1629,14 +1628,8 @@ static enum hrtimer_restart qpnp_hap_timer(struct hrtimer *timer)
 							 hap_timer);
 
 	hap->state = 0;
-	/*shankai@bsp.2015-07-16 modify begin for optimizing the response speed of the vibrator*/
-#ifndef VENDOR_EDIT
 	schedule_work(&hap->work);
-#else
-	//#ifdef VENDOR_EDIT
-	queue_work(vibqueue,&hap->work);
-#endif //VENDOR_EDIT
-	/*shankai@bsp.2015-07-16 modify end for optimizing the response speed of the vibrator*/
+
 	return HRTIMER_NORESTART;
 }
 
@@ -2163,10 +2156,7 @@ static int qpnp_haptic_probe(struct spmi_device *spmi)
 
 	mutex_init(&hap->lock);
 	mutex_init(&hap->wf_lock);
-
-	#ifdef VENDOR_EDIT
-	vibqueue = create_singlethread_workqueue("vibthread");
-	#endif //VENDOR_EDIT
+	mutex_init(&hap->set_lock);
 
 	INIT_WORK(&hap->work, qpnp_hap_worker);
 	init_completion(&hap->completion);
