@@ -31,6 +31,9 @@
 
 #include "power.h"
 
+// TheCrazyLex@PA Add to debug our change which disables fs sync on suspend
+//#define DEBUG_FS_SYNC_ON_SUSPEND
+
 struct pm_sleep_state pm_states[PM_SUSPEND_MAX] = {
 	[PM_SUSPEND_FREEZE] = { .label = "freeze", .state = PM_SUSPEND_FREEZE },
 	[PM_SUSPEND_STANDBY] = { .label = "standby", },
@@ -356,9 +359,12 @@ static int enter_state(suspend_state_t state)
 	if (state == PM_SUSPEND_FREEZE)
 		freeze_begin();
 
+	// TheCrazyLex@PA Remove feature which does an fs sync on suspend
+	#ifdef DEBUG_FS_SYNC_ON_SUSPEND 
 	printk(KERN_INFO "PM: Syncing filesystems ... ");
 	sys_sync();
 	printk("done.\n");
+	#endif
 
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state].label);
 	error = suspend_prepare(state);
