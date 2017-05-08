@@ -89,3 +89,9 @@ endif
 
 obj-$(CONFIG_SENSORS_MC3430)	+= mc3xxx.o
 obj-$(CONFIG_SENSORS_ISL29044A)	+= isl29044a.o
+#VENDOR_EDIT changhua add for tree state keys
+obj-$(CONFIG_TRI_STATE_KEY) += tri_state_key.o
+
+#VENDOR_EDIT changhua add for fingerprint
+obj-$(CONFIG_FINGERPRINT_FPC1022) += fpc1020_tee.o
+
