@@ -1230,7 +1230,7 @@ static void do_compaction(struct work_struct *work)
 	if (screen_on)
 		return;
 
-	pr_info("Scheduled memory compaction is starting");
+	pr_info("Scheduled memory compaction is starting\n");
 
 	/* Do full compaction */
 	compact_nodes();
@@ -1238,7 +1238,7 @@ static void do_compaction(struct work_struct *work)
 	/* Force compaction timeout */
 	compaction_forced_timeout = jiffies + msecs_to_jiffies(compaction_timeout_ms);
 
-	pr_info("Scheduled memory compaction is completed");
+	pr_info("Scheduled memory compaction is completed\n");
 }
 
 /* The written value is actually unused, all memory is compacted */
