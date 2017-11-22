@@ -378,7 +378,7 @@ static struct cpufreq_frequency_table *cpufreq_parse_dt(struct device *dev,
 
 #ifdef CONFIG_ARCH_MSM8994
 		if (i > 0) {
-			if (cpu < 2) {
+			if (cpu < 4) {
 				if (ftbl[i - 1].frequency ==
 						UNDERCLOCKED_MAX_KHZ_PWRCL)
 					break;
