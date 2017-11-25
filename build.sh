@@ -11,7 +11,7 @@
 # Parameters to be configured manually
 #######################################
 
-ZIPPY_VERSION="OP2-Oreo-Z3"
+ZIPPY_VERSION="OP2-Oreo-Z4"
 
 TOOLCHAIN="../g49/bin/aarch64-linux-android-"
 ARCHITECTURE=arm64
