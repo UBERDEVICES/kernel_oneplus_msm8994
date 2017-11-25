@@ -11,7 +11,7 @@
 # Parameters to be configured manually
 #######################################
 
-ZIPPY_VERSION="Oreo-Z3"
+ZIPPY_VERSION="OP2-Oreo-Z3"
 
 TOOLCHAIN="../g49/bin/aarch64-linux-android-"
 ARCHITECTURE=arm64
@@ -260,22 +260,22 @@ step5_create_anykernel_zip()
 
 	# create zip file
 	cd $REPACK_PATH
-	zip -r9 $ZIPPY_FILENAME.recovery.zip * -x $ZIPPY_FILENAME.recovery.zip
+	zip -r9 $ZIPPY_FILENAME.zip * -x $ZIPPY_FILENAME.zip
 
 	# sign recovery zip if there are keys available
 	if [ -f "$BUILD_PATH/tools_ZIPPY/testkey.x509.pem" ]; then
 		echo -e ">>> signing recovery zip\n"
-		java -jar $BUILD_PATH/tools_ZIPPY/signapk.jar -w $BUILD_PATH/tools_ZIPPY/testkey.x509.pem $BUILD_PATH/tools_ZIPPY/testkey.pk8 $ZIPPY_FILENAME.recovery.zip $ZIPPY_FILENAME.recovery.zip_signed
-		cp $ZIPPY_FILENAME.recovery.zip_signed $ZIPPY_FILENAME.recovery.zip
-		rm $ZIPPY_FILENAME.recovery.zip_signed
+		java -jar $BUILD_PATH/tools_ZIPPY/signapk.jar -w $BUILD_PATH/tools_ZIPPY/testkey.x509.pem $BUILD_PATH/tools_ZIPPY/testkey.pk8 $ZIPPY_FILENAME.zip $ZIPPY_FILENAME.zip_signed
+		cp $ZIPPY_FILENAME.zip_signed $ZIPPY_FILENAME.zip
+		rm $ZIPPY_FILENAME.zip_signed
 	fi
 
-	md5sum $ZIPPY_FILENAME.recovery.zip > $ZIPPY_FILENAME.recovery.zip.md5
+	md5sum $ZIPPY_FILENAME.zip > $ZIPPY_FILENAME.zip.md5
 
 	# Creating additional files for load&flash
 	echo -e ">>> create load&flash files\n"
 
-	cp $ZIPPY_FILENAME.recovery.zip cm-kernel.zip
+	cp $ZIPPY_FILENAME.zip cm-kernel.zip
 	md5sum cm-kernel.zip > checksum
 }
 
@@ -303,8 +303,8 @@ step8_transfer_kernel()
 	# transfer only if SMB share configured
 	if [ ! -z "$SMB_SHARE_KERNEL" ]; then
 		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "mkdir $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION"
-		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/$ZIPPY_FILENAME.recovery.zip $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\$ZIPPY_FILENAME.recovery.zip"
-		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/$ZIPPY_FILENAME.recovery.zip.md5 $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\$ZIPPY_FILENAME.recovery.zip.md5"
+		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/$ZIPPY_FILENAME.zip $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\$ZIPPY_FILENAME.zip"
+		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/$ZIPPY_FILENAME.zip.md5 $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\$ZIPPY_FILENAME.zip.md5"
 		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/checksum $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\checksum"
 		smbclient $SMB_SHARE_KERNEL -U $SMB_AUTH_KERNEL -c "put $REPACK_PATH/cm-kernel.zip $SMB_FOLDER_KERNEL\\$ZIPPY_VERSION\\cm-kernel.zip"
 		return
@@ -317,8 +317,8 @@ step8_transfer_kernel()
 		echo "$SSH_FTP_PW" | sshfs "$SSH_FTP_REMOTE" ~/bbuild_transfer -p "$SSH_FTP_PORT" -o password_stdin
 		mkdir -p ~/bbuild_transfer/$ZIPPY_VERSION
 
-		cp $REPACK_PATH/$ZIPPY_FILENAME.recovery.zip ~/bbuild_transfer/$ZIPPY_VERSION
-		cp $REPACK_PATH/$ZIPPY_FILENAME.recovery.zip.md5 ~/bbuild_transfer/$ZIPPY_VERSION
+		cp $REPACK_PATH/$ZIPPY_FILENAME.zip ~/bbuild_transfer/$ZIPPY_VERSION
+		cp $REPACK_PATH/$ZIPPY_FILENAME.zip.md5 ~/bbuild_transfer/$ZIPPY_VERSION
 		cp $REPACK_PATH/checksum ~/bbuild_transfer/$ZIPPY_VERSION
 		cp $REPACK_PATH/cm-kernel.zip ~/bbuild_transfer/$ZIPPY_VERSION
 
