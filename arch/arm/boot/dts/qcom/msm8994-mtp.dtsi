@@ -968,11 +968,11 @@ test_tfa9890:     tfa9890@36 {
 	status = "ok";
 };
 
-&blsp1_uart2 {
+/*&blsp1_uart2 {
 	status= "ok";
 	 pinctrl-names = "default";
 	 pinctrl-0 = <&uart_console_sleep>;
-};
+};*/
 
 &pcie0 {
 	status = "disabled";
