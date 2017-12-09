@@ -383,6 +383,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 
 # TheCrazyLex@PA Optimize for Cortex-A53+Cortex-A57 combo
 KBUILD_CFLAGS	+= -mcpu=cortex-a57.cortex-a53
+# Disable useless debugging
+KBUILD_CFLAGS   += -g0 -DNDEBUG
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
