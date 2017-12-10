@@ -365,7 +365,7 @@ out_release:
 
 int __ref cpu_down(unsigned int cpu)
 {
-	const unsigned int blocked_cpus = 0x3;
+	const unsigned int blocked_cpus = 0xF;
 	int err;
 
 	/* kthreads and workqueues require the little cluster to stay online */
